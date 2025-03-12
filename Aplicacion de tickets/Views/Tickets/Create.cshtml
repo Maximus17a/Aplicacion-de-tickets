@@ -1,0 +1,109 @@
+﻿@model AplicacionDeTickets.Models.ViewModels.TicketViewModel
+
+@{
+    ViewData["Title"] = "Crear Ticket";
+}
+
+<div class="container">
+    <h1 class="mb-4">@ViewData["Title"]</h1>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Nuevo Ticket</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Create" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="Asunto" class="form-label"></label>
+                                    <input asp-for="Asunto" class="form-control" />
+                                    <span asp-validation-for="Asunto" class="text-danger"></span>
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label asp-for="ID_Categoria" class="form-label">Categoría</label>
+                                    <select asp-for="ID_Categoria" class="form-select">
+                                        <option value="">-- Seleccione una categoría --</option>
+                                        @if (Model.Categorias != null)
+                                        {
+                                            @foreach (var item in Model.Categorias)
+                                            {
+                                                <option value="@item.Value">@item.Text</option>
+                                            }
+                                        }
+                                    </select>
+                                    <span asp-validation-for="ID_Categoria" class="text-danger"></span>
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label asp-for="ID_NivelUrgencia" class="form-label">Nivel de Urgencia</label>
+                                    <select asp-for="ID_NivelUrgencia" class="form-select">
+                                        <option value="">-- Seleccione un nivel --</option>
+                                        @if (Model.NivelesUrgencia != null)
+                                        {
+                                            @foreach (var item in Model.NivelesUrgencia)
+                                            {
+                                                <option value="@item.Value">@item.Text</option>
+                                            }
+                                        }
+                                    </select>
+                                    <span asp-validation-for="ID_NivelUrgencia" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="ID_NivelImportancia" class="form-label">Nivel de Importancia</label>
+                                    <select asp-for="ID_NivelImportancia" class="form-select">
+                                        <option value="">-- Seleccione un nivel --</option>
+                                        @if (Model.NivelesImportancia != null)
+                                        {
+                                            @foreach (var item in Model.NivelesImportancia)
+                                            {
+                                                <option value="@item.Value">@item.Text</option>
+                                            }
+                                        }
+                                    </select>
+                                    <span asp-validation-for="ID_NivelImportancia" class="text-danger"></span>
+                                </div>
+
+                                <div class="form-group mb-3">
+                                    <label asp-for="Asignado_A" class="form-label">Asignar a</label>
+                                    <select asp-for="Asignado_A" class="form-select">
+                                        <option value="">-- Seleccione un analista --</option>
+                                        @if (Model.Analistas != null)
+                                        {
+                                            @foreach (var item in Model.Analistas)
+                                            {
+                                                <option value="@item.Value">@item.Text</option>
+                                            }
+                                        }
+                                    </select>
+                                    <span asp-validation-for="Asignado_A" class="text-danger"></span>
+                                </div>
+
+                                <input type="hidden" asp-for="Creado_Por" />
+                            </div>
+                        </div>
+
+                        <div class="form-group mt-3">
+                            <button type="submit" class="btn btn-primary">Crear Ticket</button>
+                            <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

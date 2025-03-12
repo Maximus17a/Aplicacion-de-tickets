@@ -1,0 +1,52 @@
+﻿@model AplicacionDeTickets.Models.ViewModels.SolucionViewModel
+
+@{
+    ViewData["Title"] = "Documentar Solución";
+}
+
+<div class="container">
+    <h1 class="mb-4">@ViewData["Title"]</h1>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Documentar Solución para Ticket: @Model.ConsecutivoTicket</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <p><strong>Asunto del Ticket:</strong> @Model.AsuntoTicket</p>
+                    </div>
+
+                    <form asp-action="Create" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                        <input type="hidden" asp-for="ID_Ticket" />
+                        <input type="hidden" asp-for="Resuelto_Por" />
+                        <input type="hidden" asp-for="ConsecutivoTicket" />
+                        <input type="hidden" asp-for="AsuntoTicket" />
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Solucion" class="form-label">Descripción de la Solución</label>
+                            <textarea asp-for="Solucion" class="form-control" rows="5"
+                                      placeholder="Describe detalladamente la solución implementada..."></textarea>
+                            <span asp-validation-for="Solucion" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mt-3">
+                            <button type="submit" class="btn btn-primary">Guardar Solución</button>
+                            <a asp-controller="Tickets" asp-action="Details" asp-route-id="@Model.ID_Ticket"
+                               class="btn btn-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,0 +1,143 @@
+﻿@model IEnumerable<AplicacionDeTickets.Models.ViewModels.TicketViewModel>
+
+@{
+    ViewData["Title"] = ViewData["ListTitle"] ?? "Tickets";
+    var rolUsuario = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value;
+}
+
+<div class="container">
+    <h1 class="mb-4">@ViewData["Title"]</h1>
+    
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    
+    <div class="row mb-3">
+        <div class="col">
+            @if (rolUsuario == "Soporte")
+            {
+                <a asp-action="Create" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i> Crear Nuevo Ticket
+                </a>
+            }
+        </div>
+    </div>
+    
+    @if (Model != null && Model.Any())
+    {
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Consecutivo</th>
+                                <th>Asunto</th>
+                                <th>Categoría</th>
+                                <th>Estado</th>
+                                <th>Urgencia</th>
+                                <th>Importancia</th>
+                                <th>Fecha Creación</th>
+                                <th>Última Modificación</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>@item.Consecutivo</td>
+                                    <td>@item.Asunto</td>
+                                    <td>@item.NombreCategoria</td>
+                                    <td>
+                                        @if (item.Estado == "Creado")
+                                        {
+                                            <span class="badge bg-info">@item.Estado</span>
+                                        }
+                                        else if (item.Estado == "Pendiente")
+                                        {
+                                            <span class="badge bg-warning">@item.Estado</span>
+                                        }
+                                        else if (item.Estado == "Resuelto")
+                                        {
+                                            <span class="badge bg-success">@item.Estado</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">@item.Estado</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.NivelUrgencia == "Alta")
+                                        {
+                                            <span class="badge bg-danger">@item.NivelUrgencia</span>
+                                        }
+                                        else if (item.NivelUrgencia == "Media")
+                                        {
+                                            <span class="badge bg-warning">@item.NivelUrgencia</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">@item.NivelUrgencia</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (item.NivelImportancia == "Alta")
+                                        {
+                                            <span class="badge bg-danger">@item.NivelImportancia</span>
+                                        }
+                                        else if (item.NivelImportancia == "Media")
+                                        {
+                                            <span class="badge bg-warning">@item.NivelImportancia</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">@item.NivelImportancia</span>
+                                        }
+                                    </td>
+                                    <td>@item.Fecha_Creacion?.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>@item.Ultima_Modificacion?.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a asp-action="Details" asp-route-id="@item.ID_Ticket" class="btn btn-sm btn-primary">
+                                                <i class="bi bi-eye"></i> Ver
+                                            </a>
+                                            <a asp-action="Edit" asp-route-id="@item.ID_Ticket" class="btn btn-sm btn-warning">
+                                                <i class="bi bi-pencil"></i> Editar
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            <p>No hay tickets disponibles.</p>
+            @if (rolUsuario == "Soporte")
+            {
+                <p>
+                    <a asp-action="Create" class="btn btn-success">Crear el primer ticket</a>
+                </p>
+            }
+        </div>
+    }
+</div>
+

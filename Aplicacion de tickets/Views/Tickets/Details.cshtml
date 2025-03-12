@@ -1,0 +1,154 @@
+﻿@model AplicacionDeTickets.Models.ViewModels.TicketViewModel
+
+@{
+    ViewData["Title"] = "Detalles de Ticket";
+    var rolUsuario = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value;
+}
+
+<div class="container">
+    <h1 class="mb-4">@ViewData["Title"]</h1>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4>Ticket: @Model.Consecutivo</h4>
+                <div>
+                    <a asp-action="Edit" asp-route-id="@Model.ID_Ticket" class="btn btn-warning">
+                        <i class="bi bi-pencil"></i> Editar
+                    </a>
+                    <a asp-action="Index" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Volver
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <dl class="row">
+                        <dt class="col-sm-4">Asunto:</dt>
+                        <dd class="col-sm-8">@Model.Asunto</dd>
+
+                        <dt class="col-sm-4">Categoría:</dt>
+                        <dd class="col-sm-8">@Model.NombreCategoria</dd>
+
+                        <dt class="col-sm-4">Estado:</dt>
+                        <dd class="col-sm-8">
+                            @if (Model.Estado == "Creado")
+                            {
+                                <span class="badge bg-info">@Model.Estado</span>
+                            }
+                            else if (Model.Estado == "Pendiente")
+                            {
+                                <span class="badge bg-warning">@Model.Estado</span>
+                            }
+                            else if (Model.Estado == "Resuelto")
+                            {
+                                <span class="badge bg-success">@Model.Estado</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">@Model.Estado</span>
+                            }
+                        </dd>
+                    </dl>
+                </div>
+
+                <div class="col-md-6">
+                    <dl class="row">
+                        <dt class="col-sm-4">Urgencia:</dt>
+                        <dd class="col-sm-8">
+                            @if (Model.NivelUrgencia == "Alta")
+                            {
+                                <span class="badge bg-danger">@Model.NivelUrgencia</span>
+                            }
+                            else if (Model.NivelUrgencia == "Media")
+                            {
+                                <span class="badge bg-warning">@Model.NivelUrgencia</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">@Model.NivelUrgencia</span>
+                            }
+                        </dd>
+
+                        <dt class="col-sm-4">Importancia:</dt>
+                        <dd class="col-sm-8">
+                            @if (Model.NivelImportancia == "Alta")
+                            {
+                                <span class="badge bg-danger">@Model.NivelImportancia</span>
+                            }
+                            else if (Model.NivelImportancia == "Media")
+                            {
+                                <span class="badge bg-warning">@Model.NivelImportancia</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">@Model.NivelImportancia</span>
+                            }
+                        </dd>
+
+                        <dt class="col-sm-4">Creado Por:</dt>
+                        <dd class="col-sm-8">@Model.NombreCreador</dd>
+
+                        <dt class="col-sm-4">Asignado A:</dt>
+                        <dd class="col-sm-8">@Model.NombreAsignado</dd>
+
+                        <dt class="col-sm-4">Fecha Creación:</dt>
+                        <dd class="col-sm-8">@Model.Fecha_Creacion?.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                        <dt class="col-sm-4">Última Modificación:</dt>
+                        <dd class="col-sm-8">@Model.Ultima_Modificacion?.ToString("dd/MM/yyyy HH:mm")</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-footer">
+            @if (rolUsuario == "Analista" && Model.Estado != "Resuelto" && Model.Asignado_A == User.Identity.Name)
+            {
+                <div class="row">
+                    <div class="col-md-6">
+                        <form asp-action="OpenForDocumentation" asp-route-id="@Model.ID_Ticket" method="post">
+                            <div class="input-group">
+                                <input type="text"
+                                       name="comentarios"
+                                       class="form-control"
+                                       placeholder="Comentarios (opcional)" />
+                                <button type="submit" class="btn btn-primary">
+                                    Abrir para Documentación
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="col-md-6 text-end">
+                        <a asp-controller="Soluciones"
+                           asp-action="Create"
+                           asp-route-id="@Model.ID_Ticket"
+                           class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> Documentar Solución
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

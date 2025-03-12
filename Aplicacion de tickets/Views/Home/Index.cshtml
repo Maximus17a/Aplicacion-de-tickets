@@ -1,0 +1,241 @@
+﻿@{
+    ViewData["Title"] = "Inicio";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Sistema de Gestión de Tickets</h1>
+    <p class="lead">Bienvenido al sistema de gestión de tickets. Inicia sesión para comenzar.</p>
+
+    <div class="row mt-5 justify-content-center">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Iniciar Sesión</h5>
+                    <p class="card-text">Accede a tu cuenta para gestionar tus tickets.</p>
+                    <a asp-controller="Account" asp-action="Login" class="btn btn-primary">Iniciar Sesión</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Registrarse</h5>
+                    <p class="card-text">Crea una nueva cuenta para utilizar el sistema.</p>
+                    <a asp-controller="Account" asp-action="Register" class="btn btn-secondary">Registrarse</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+// Views/Home/Dashboard.cshtml
+@model AplicacionDeTickets.Models.ViewModels.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
+    var rolUsuario = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value;
+    var nombreUsuario = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.GivenName)?.Value;
+}
+
+<div class="container">
+    <h1 class="mb-4">Dashboard</h1>
+
+    <div class="alert alert-info">
+        <h4>Bienvenido, @nombreUsuario</h4>
+        <p>Rol: @rolUsuario</p>
+    </div>
+
+    <div class="row">
+        @if (rolUsuario == "Soporte")
+        {
+            <div class="col-md-4">
+                <div class="card text-white bg-primary mb-3">
+                    <div class="card-header">Tickets Creados Hoy</div>
+                    <div class="card-body">
+                        <h5 class="card-title">@Model.TicketsCreadosHoy</h5>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card text-white bg-warning mb-3">
+                    <div class="card-header">Tickets Pendientes</div>
+                    <div class="card-body">
+                        <h5 class="card-title">@Model.TicketsPendientes</h5>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card text-white bg-success mb-3">
+                    <div class="card-header">Total Tickets Creados</div>
+                    <div class="card-body">
+                        <h5 class="card-title">@Model.TotalTicketsCreados</h5>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (rolUsuario == "Analista")
+        {
+            <div class="col-md-4">
+                <div class="card text-white bg-primary mb-3">
+                    <div class="card-header">Tickets Resueltos Hoy</div>
+                    <div class="card-body">
+                        <h5 class="card-title">@Model.TicketsResueltosHoy</h5>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card text-white bg-warning mb-3">
+                    <div class="card-header">Tickets Pendientes</div>
+                    <div class="card-body">
+                        <h5 class="card-title">@Model.TicketsAsignadosPendientes</h5>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card text-white bg-success mb-3">
+                    <div class="card-header">Total Tickets Resueltos</div>
+                    <div class="card-body">
+                        <h5 class="card-title">@Model.TotalTicketsResueltos</h5>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @* <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Tickets Recientes</h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.TicketsRecientes != null && Model.TicketsRecientes.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Consecutivo</th>
+                                        <th>Asunto</th>
+                                        <th>Categoría</th>
+                                        <th>Estado</th>
+                                        <th>Urgencia</th>
+                                        <th>Importancia</th>
+                                        <th>Fecha</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var ticket in Model.TicketsRecientes)
+                                    {
+                                        <tr>
+                                            <td>@ticket.Consecutivo</td>
+                                            <td>@ticket.Asunto</td>
+                                            <td>@ticket.NombreCategoria</td>
+                                            <td>
+                                                @if (ticket.Estado == "Creado")
+                                                {
+                                                    <span class="badge bg-info">@ticket.Estado</span>
+                                                }
+                                                else if (ticket.Estado == "Pendiente")
+                                                {
+                                                    <span class="badge bg-warning">@ticket.Estado</span>
+                                                }
+                                                else if (ticket.Estado == "Resuelto")
+                                                {
+                                                    <span class="badge bg-success">@ticket.Estado</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-secondary">@ticket.Estado</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (ticket.NivelUrgencia == "Alta")
+                                                {
+                                                    <span class="badge bg-danger">@ticket.NivelUrgencia</span>
+                                                }
+                                                else if (ticket.NivelUrgencia == "Media")
+                                                {
+                                                    <span class="badge bg-warning">@ticket.NivelUrgencia</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-success">@ticket.NivelUrgencia</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                @if (ticket.NivelImportancia == "Alta")
+                                                {
+                                                    <span class="badge bg-danger">@ticket.NivelImportancia</span>
+                                                }
+                                                else if (ticket.NivelImportancia == "Media")
+                                                {
+                                                    <span class="badge bg-warning">@ticket.NivelImportancia</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-success">@ticket.NivelImportancia</span>
+                                                }
+                                            </td>
+                                            <td>@ticket.Fecha_Creacion?.ToString("dd/MM/yyyy HH:mm")</td>
+                                            <td>
+                                                <a asp-controller="Tickets" asp-action="Details" asp-route-id="@ticket.ID_Ticket" class="btn btn-sm btn-primary">
+                                                    <i class="bi bi-eye"></i> Ver
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-center">No hay tickets recientes.</p>
+                    } *@
+                </div>
+                <div class="card-footer">
+                    <a asp-controller="Tickets" asp-action="Index" class="btn btn-primary">Ver Todos los Tickets</a>
+                    @if (rolUsuario == "Soporte")
+                    {
+                        <a asp-controller="Tickets" asp-action="Create" class="btn btn-success">Crear Ticket</a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+// Views/Home/Privacy.cshtml
+@{
+    ViewData["Title"] = "Política de Privacidad";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<p>Esta aplicación maneja información sensible relacionada con tickets de soporte técnico. A continuación se detallan las políticas de privacidad:</p>
+
+<ul>
+    <li>La información de los tickets es confidencial y solo accesible para el personal autorizado.</li>
+    <li>Los usuarios de soporte solo pueden ver sus propios tickets.</li>
+    <li>Los analistas solo pueden ver los tickets que les han sido asignados.</li>
+    <li>Las contraseñas se almacenan de forma segura (en una implementación real, estarían encriptadas).</li>
+    <li>No se comparte información con terceros.</li>
+</ul>
+
+// Views/Home/Error.cshtml
+@{
+    ViewData["Title"] = "Error";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Error</h1>
+    <p class="lead">Ha ocurrido un error al procesar tu solicitud.</p>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-primary">Volver al Inicio</a>
+</div>

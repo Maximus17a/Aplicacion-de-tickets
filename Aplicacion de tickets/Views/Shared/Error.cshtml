@@ -1,0 +1,18 @@
+﻿@{
+    ViewData["Title"] = "Error";
+}
+
+<h1 class="text-danger">Error.</h1>
+<h2 class="text-danger">Ha ocurrido un error al procesar su solicitud.</h2>
+
+<h3>Detalles del error:</h3>
+<div class="alert alert-danger">
+    <p>
+        <strong>Solicitud ID:</strong> <code>@DateTime.Now.ToString("yyyyMMddHHmmssfff")</code>
+    </p>
+</div>
+
+<h3>Información para el equipo de desarrollo:</h3>
+<p>
+    <strong>Entorno:</strong> <code>@Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")</code>
+</p>

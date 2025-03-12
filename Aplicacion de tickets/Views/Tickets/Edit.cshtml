@@ -1,0 +1,108 @@
+﻿@model AplicacionDeTickets.Models.ViewModels.TicketViewModel
+
+@{ViewData
+    ["Title"] ="Editar Ticket";
+
+    
+var rolUsuario =User.Claims.FirstOrDefault(c =>c.Type ==System.Security.Claims.ClaimTypes.Role)?.Value;
+}
+
+
+
+
+
+<div class="container">
+    <h1 class="mb-4">@ViewData["Title"]</h1>
+    
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Ticket: @Model.Consecutivo</h4>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Edit" method="post">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                        
+                        <input type="hidden" asp-for="ID_Ticket" />
+                        <input type="hidden" asp-for="Consecutivo" />
+                        <input type="hidden" asp-for="Creado_Por" />
+                        <input type="hidden" asp-for="Fecha_Creacion" />
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="Asunto" class="form-label"></label>
+                                    <input asp-for="Asunto" class="form-control" />
+                                    <span asp-validation-for="Asunto" class="text-danger"></span>
+                                </div>
+                                
+                                <div class="form-group mb-3">
+                                    <label asp-for="ID_Categoria" class="form-label">Categoría</label>
+                                    <select asp-for="ID_Categoria" class="form-select" asp-items="Model.Categorias">
+                                        <option value="">-- Seleccione una categoría --</option>
+                                    </select>
+                                    <span asp-validation-for="ID_Categoria" class="text-danger"></span>
+                                </div>
+                                
+                                <div class="form-group mb-3">
+                                    <label asp-for="ID_NivelUrgencia" class="form-label">Nivel de Urgencia</label>
+                                    <select asp-for="ID_NivelUrgencia" class="form-select" asp-items="Model.NivelesUrgencia">
+                                        <option value="">-- Seleccione un nivel --</option>
+                                    </select>
+                                    <span asp-validation-for="ID_NivelUrgencia" class="text-danger"></span>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="ID_NivelImportancia" class="form-label">Nivel de Importancia</label>
+                                    <select asp-for="ID_NivelImportancia" class="form-select" asp-items="Model.NivelesImportancia">
+                                        <option value="">-- Seleccione un nivel --</option>
+                                    </select>
+                                    <span asp-validation-for="ID_NivelImportancia" class="text-danger"></span>
+                                </div>
+                                
+                                <div class="form-group mb-3">
+                                    <label asp-for="ID_EstadoTicket" class="form-label">Estado</label>
+                                    <select asp-for="ID_EstadoTicket" class="form-select" asp-items="Model.Estados">
+                                        <option value="">-- Seleccione un estado --</option>
+                                    </select>
+                                    <span asp-validation-for="ID_EstadoTicket" class="text-danger"></span>
+                                </div>
+                                
+                                <div class="form-group mb-3">
+                                    <label asp-for="Asignado_A" class="form-label">Asignar a</label>
+                                    <select asp-for="Asignado_A" class="form-select" asp-items="Model.Analistas">
+                                        <option value="">-- Seleccione un analista --</option>
+                                    </select>
+                                    <span asp-validation-for="Asignado_A" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group mt-3">
+                            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                            <a asp-action="Details" asp-route-id="@Model.ID_Ticket" class="btn btn-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    
+@{
+await
+ Html
+.
+RenderPartialAsync
+(
+"_ValidationScriptsPartial"
+)
+;
+}
+
+}
