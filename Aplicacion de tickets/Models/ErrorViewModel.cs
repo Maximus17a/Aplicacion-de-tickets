@@ -1,4 +1,4 @@
-﻿namespace Aplicacion_de_tickets.Models
+﻿namespace AplicacionDeTickets.Models.ViewModels
 {
     public class ErrorViewModel
     {

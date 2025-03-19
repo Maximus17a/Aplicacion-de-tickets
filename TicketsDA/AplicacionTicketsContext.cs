@@ -1,6 +1,5 @@
 ﻿using AplicacionDeTickets.Models.Entities;
 using Microsoft.EntityFrameworkCore;
-using System.Net.Sockets;
 
 namespace AplicacionDeTickets.Models.DbContexts
 {
@@ -16,12 +15,16 @@ namespace AplicacionDeTickets.Models.DbContexts
         public DbSet<EstadoTicket> Estado_Tickets { get; set; }
         public DbSet<NivelImportancia> Nivel_Importancia { get; set; }
         public DbSet<NivelUrgencia> Nivel_Urgencia { get; set; }
-        public DbSet<Tickets> Tickets { get; set; }
+        public DbSet<Ticket> Tickets { get; set; }
         public DbSet<HistorialTicket> Historial_Tickets { get; set; }
         public DbSet<TicketSolucionado> Ticket_Solucionados { get; set; }
+        public DbSet<TicketCreationResult> TicketCreationResults { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            // Configurar el entity para resultados de procedimientos almacenados
+            modelBuilder.Entity<TicketCreationResult>().HasNoKey();
+
             // Configurar las entidades según el esquema existente
 
             // Configuración de Usuario
@@ -49,36 +52,36 @@ namespace AplicacionDeTickets.Models.DbContexts
                 .HasAnnotation("CheckConstraint", "Nivel_Urgencia IN ('Baja', 'Media', 'Alta')");
 
             // Configuración de Ticket
-            modelBuilder.Entity<Tickets>().ToTable("Tickets");
-            modelBuilder.Entity<Tickets>().HasIndex(t => t.Consecutivo).IsUnique();
+            modelBuilder.Entity<Ticket>().ToTable("Tickets");
+            modelBuilder.Entity<Ticket>().HasIndex(t => t.Consecutivo).IsUnique();
 
             // Relaciones de Ticket
-            modelBuilder.Entity<Tickets>()
+            modelBuilder.Entity<Ticket>()
                 .HasOne(t => t.Categoria)
                 .WithMany(c => c.Tickets)
                 .HasForeignKey(t => t.ID_Categoria);
 
-            modelBuilder.Entity<Tickets>()
+            modelBuilder.Entity<Ticket>()
                 .HasOne(t => t.NivelUrgencia)
                 .WithMany(n => n.Tickets)
                 .HasForeignKey(t => t.ID_NivelUrgencia);
 
-            modelBuilder.Entity<Tickets>()
+            modelBuilder.Entity<Ticket>()
                 .HasOne(t => t.NivelImportancia)
                 .WithMany(n => n.Tickets)
                 .HasForeignKey(t => t.ID_NivelImportancia);
 
-            modelBuilder.Entity<Tickets>()
+            modelBuilder.Entity<Ticket>()
                 .HasOne(t => t.EstadoTicket)
                 .WithMany(e => e.Tickets)
                 .HasForeignKey(t => t.ID_EstadoTicket);
 
-            modelBuilder.Entity<Tickets>()
+            modelBuilder.Entity<Ticket>()
                 .HasOne(t => t.CreadoPor)
                 .WithMany(u => u.TicketsCreados)
                 .HasForeignKey(t => t.Creado_Por);
 
-            modelBuilder.Entity<Tickets>()
+            modelBuilder.Entity<Ticket>()
                 .HasOne(t => t.AsignadoA)
                 .WithMany(u => u.TicketsAsignados)
                 .HasForeignKey(t => t.Asignado_A);

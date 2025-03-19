@@ -25,7 +25,7 @@ namespace TicketsBO.Sevicios
             if (rolUsuario == "Soporte")
             {
                 dashboardData.TicketsCreadosHoy = await _context.Tickets
-                    .CountAsync(t => t.Creado_Por == userId && t.Fecha_Creacion.Date == DateTime.Today);
+                    .CountAsync(t => t.Creado_Por == userId && t.Fecha_Creacion.HasValue && t.Fecha_Creacion.Value.Date == DateTime.Today);
 
                 dashboardData.TicketsPendientes = await _context.Tickets
                     .CountAsync(t => t.Creado_Por == userId && t.EstadoTicket.Estado == "Pendiente");
@@ -33,7 +33,7 @@ namespace TicketsBO.Sevicios
             else if (rolUsuario == "Analista")
             {
                 dashboardData.TicketsResueltosHoy = await _context.Ticket_Solucionados
-                    .CountAsync(s => s.Resuelto_Por == userId && s.Fecha_Resolucion.Date == DateTime.Today);
+                    .CountAsync(s => s.Resuelto_Por == userId && s.Fecha_Resolucion.HasValue && s.Fecha_Resolucion.Value.Date == DateTime.Today);
 
                 dashboardData.TicketsAsignadosPendientes = await _context.Tickets
                     .CountAsync(t => t.Asignado_A == userId && t.EstadoTicket.Estado != "Resuelto");

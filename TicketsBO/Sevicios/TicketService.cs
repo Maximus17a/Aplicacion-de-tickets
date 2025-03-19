@@ -2,13 +2,12 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Net.Sockets;
 using System.Threading.Tasks;
 using AplicacionDeTickets.Models.DbContexts;
 using AplicacionDeTickets.Models.Entities;
 using AplicacionDeTickets.Models.ViewModels;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.Data.SqlClient; // Cambiado a Microsoft.Data.SqlClient
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -136,12 +135,14 @@ namespace AplicacionDeTickets.Services
                             {
                                 var ticketId = reader.GetInt32(0);
                                 var consecutivo = reader.GetString(1);
+                                _logger.LogInformation($"Ticket creado exitosamente: ID={ticketId}, Consecutivo={consecutivo}");
                                 return (true, $"Ticket {consecutivo} creado exitosamente", ticketId);
                             }
                         }
                     }
                 }
 
+                _logger.LogWarning("No se pudo crear el ticket: No se recibió respuesta del procedimiento almacenado");
                 return (false, "No se pudo crear el ticket", 0);
             }
             catch (Exception ex)
@@ -155,6 +156,7 @@ namespace AplicacionDeTickets.Services
         {
             try
             {
+                // Verificar que el ticket existe
                 var ticket = await _context.Tickets.FindAsync(model.ID_Ticket);
                 if (ticket == null)
                     return (false, "Ticket no encontrado");
@@ -162,16 +164,28 @@ namespace AplicacionDeTickets.Services
                 // Guardar el estado anterior para el historial
                 var estadoAnterior = ticket.ID_EstadoTicket;
 
-                // Actualizar propiedades
-                ticket.Asunto = model.Asunto;
-                ticket.ID_Categoria = model.ID_Categoria;
-                ticket.ID_NivelUrgencia = model.ID_NivelUrgencia;
-                ticket.ID_NivelImportancia = model.ID_NivelImportancia;
-                ticket.ID_EstadoTicket = model.ID_EstadoTicket;
-                ticket.Asignado_A = model.Asignado_A;
-                ticket.Ultima_Modificacion = DateTime.Now;
+                // Usar SQL directo para actualizar el ticket y evitar triggers
+                var sql = @"
+            UPDATE Tickets SET 
+                Asunto = @Asunto, 
+                ID_Categoria = @ID_Categoria, 
+                ID_NivelUrgencia = @ID_NivelUrgencia, 
+                ID_NivelImportancia = @ID_NivelImportancia, 
+                ID_EstadoTicket = @ID_EstadoTicket, 
+                Ultima_Modificacion = GETDATE()
+            WHERE ID_Ticket = @ID_Ticket";
 
-                _context.Tickets.Update(ticket);
+                var parameters = new[]
+                {
+            new SqlParameter("@Asunto", model.Asunto),
+            new SqlParameter("@ID_Categoria", model.ID_Categoria),
+            new SqlParameter("@ID_NivelUrgencia", model.ID_NivelUrgencia),
+            new SqlParameter("@ID_NivelImportancia", model.ID_NivelImportancia),
+            new SqlParameter("@ID_EstadoTicket", model.ID_EstadoTicket),
+            new SqlParameter("@ID_Ticket", model.ID_Ticket)
+        };
+
+                await _context.Database.ExecuteSqlRawAsync(sql, parameters);
 
                 // Si el estado cambió, registrar en el historial
                 if (estadoAnterior != model.ID_EstadoTicket)
@@ -179,7 +193,7 @@ namespace AplicacionDeTickets.Services
                     var historial = new HistorialTicket
                     {
                         ID_Ticket = model.ID_Ticket,
-                        Modificado_Por = model.Creado_Por, // Aquí deberías usar el usuario actual
+                        Modificado_Por = model.Creado_Por,
                         Estado_Previo = estadoAnterior,
                         Nuevo_Estado = model.ID_EstadoTicket,
                         Fecha_Modificacion = DateTime.Now,
@@ -187,14 +201,14 @@ namespace AplicacionDeTickets.Services
                     };
 
                     await _context.Historial_Tickets.AddAsync(historial);
+                    await _context.SaveChangesAsync();
                 }
 
-                await _context.SaveChangesAsync();
                 return (true, "Ticket actualizado exitosamente");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error en UpdateTicketAsync");
+                _logger.LogError(ex, "Error en UpdateTicketAsync: {Message}", ex.Message);
                 return (false, "Error al actualizar el ticket: " + ex.Message);
             }
         }
@@ -203,12 +217,21 @@ namespace AplicacionDeTickets.Services
         {
             try
             {
-                // Ejecutar el stored procedure sp_AbrirTicketParaDocumentacion
-                await _context.Database.ExecuteSqlRawAsync(
-                    "EXEC sp_AbrirTicketParaDocumentacion @ID_Ticket, @ID_Analista, @Comentarios",
-                    new SqlParameter("@ID_Ticket", ticketId),
-                    new SqlParameter("@ID_Analista", analistaId),
-                    new SqlParameter("@Comentarios", (object)comentarios ?? DBNull.Value));
+                using (var connection = new SqlConnection(_context.Database.GetConnectionString()))
+                {
+                    await connection.OpenAsync();
+
+                    using (var command = new SqlCommand("sp_AbrirTicketParaDocumentacion", connection))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+
+                        command.Parameters.AddWithValue("@ID_Ticket", ticketId);
+                        command.Parameters.AddWithValue("@ID_Analista", analistaId);
+                        command.Parameters.AddWithValue("@Comentarios", comentarios ?? "Abierto para documentación");
+
+                        await command.ExecuteNonQueryAsync();
+                    }
+                }
 
                 return (true, "Ticket abierto para documentación exitosamente");
             }
@@ -223,19 +246,98 @@ namespace AplicacionDeTickets.Services
         {
             try
             {
-                // Ejecutar el stored procedure sp_AgregarSolucionTicket
-                await _context.Database.ExecuteSqlRawAsync(
-                    "EXEC sp_AgregarSolucionTicket @ID_Ticket, @Solucion, @Resuelto_Por",
-                    new SqlParameter("@ID_Ticket", model.ID_Ticket),
-                    new SqlParameter("@Solucion", model.Solucion),
-                    new SqlParameter("@Resuelto_Por", model.Resuelto_Por));
+                // Validar que el modelo no sea nulo
+                if (model == null)
+                {
+                    _logger.LogWarning("Se intentó agregar una solución con un modelo nulo");
+                    return (false, "No se proporcionaron datos de solución");
+                }
 
-                return (true, "Solución agregada exitosamente");
+                // Validar que la solución no esté vacía
+                if (string.IsNullOrWhiteSpace(model.Solucion))
+                {
+                    _logger.LogWarning($"Se intentó agregar una solución vacía para el ticket {model.ID_Ticket}");
+                    return (false, "La descripción de la solución no puede estar vacía");
+                }
+
+                // Verificar que el ticket exista
+                var ticket = await _context.Tickets.FindAsync(model.ID_Ticket);
+                if (ticket == null)
+                {
+                    _logger.LogWarning($"Se intentó agregar una solución para un ticket inexistente: {model.ID_Ticket}");
+                    return (false, "El ticket no existe");
+                }
+
+                _logger.LogInformation($"Agregando solución para el ticket {model.ID_Ticket}");
+
+                // Consultar el ID del estado "Resuelto"
+                var estadoResueltoId = await _context.Estado_Tickets
+                    .Where(e => e.Estado == "Resuelto")
+                    .Select(e => e.ID_EstadoTicket)
+                    .FirstOrDefaultAsync();
+
+                if (estadoResueltoId == 0)
+                {
+                    _logger.LogError("No se pudo encontrar el estado 'Resuelto' en la base de datos");
+                    return (false, "Error al determinar el estado 'Resuelto'");
+                }
+
+                // Usar Entity Framework Core para crear la solución y actualizar el ticket
+                using (var transaction = await _context.Database.BeginTransactionAsync())
+                {
+                    try
+                    {
+                        // Crear nueva solución
+                        var solucion = new TicketSolucionado
+                        {
+                            ID_Ticket = model.ID_Ticket,
+                            Solucion = model.Solucion,
+                            Resuelto_Por = model.Resuelto_Por,
+                            Fecha_Resolucion = DateTime.Now
+                        };
+
+                        // Guardar la solución
+                        await _context.Ticket_Solucionados.AddAsync(solucion);
+
+                        // Actualizar el estado del ticket a "Resuelto"
+                        ticket.ID_EstadoTicket = estadoResueltoId;
+                        ticket.Ultima_Modificacion = DateTime.Now;
+                        _context.Tickets.Update(ticket);
+
+                        // Registrar el cambio en el historial
+                        var historial = new HistorialTicket
+                        {
+                            ID_Ticket = model.ID_Ticket,
+                            Modificado_Por = model.Resuelto_Por,
+                            Estado_Previo = ticket.ID_EstadoTicket,
+                            Nuevo_Estado = estadoResueltoId,
+                            Fecha_Modificacion = DateTime.Now,
+                            Comentarios = "Ticket resuelto y documentado"
+                        };
+
+                        await _context.Historial_Tickets.AddAsync(historial);
+
+                        // Guardar todos los cambios
+                        await _context.SaveChangesAsync();
+
+                        // Confirmar la transacción
+                        await transaction.CommitAsync();
+
+                        _logger.LogInformation($"Solución agregada exitosamente para el ticket {model.ID_Ticket}");
+                        return (true, "Solución documentada exitosamente");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Revertir la transacción en caso de error
+                        await transaction.RollbackAsync();
+                        throw; // Relanzar la excepción para que sea capturada en el catch externo
+                    }
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error en AgregarSolucionTicketAsync");
-                return (false, "Error al agregar la solución: " + ex.Message);
+                _logger.LogError(ex, $"Error al agregar solución para el ticket {model.ID_Ticket}: {ex.Message}");
+                return (false, $"Error al documentar la solución: {ex.Message}");
             }
         }
 
@@ -404,7 +506,7 @@ namespace AplicacionDeTickets.Services
         }
 
         // Método auxiliar para mapear entidades a ViewModels
-        private TicketViewModel MapToViewModel(Tickets ticket)
+        private TicketViewModel MapToViewModel(Ticket ticket)
         {
             return new TicketViewModel
             {
@@ -414,7 +516,7 @@ namespace AplicacionDeTickets.Services
                 ID_Categoria = ticket.ID_Categoria ?? 0,
                 ID_NivelUrgencia = ticket.ID_NivelUrgencia ?? 0,
                 ID_NivelImportancia = ticket.ID_NivelImportancia ?? 0,
-                ID_EstadoTicket = ticket.ID_EstadoTicket,
+                ID_EstadoTicket = (int)ticket.ID_EstadoTicket,
                 Creado_Por = ticket.Creado_Por,
                 Asignado_A = ticket.Asignado_A,
                 Fecha_Creacion = ticket.Fecha_Creacion,
@@ -430,6 +532,205 @@ namespace AplicacionDeTickets.Services
                     ? $"{ticket.AsignadoA.Nombre} {ticket.AsignadoA.Primer_Apellido}"
                     : null
             };
+        }
+        public List<TicketViewModel> GetRecentTicketsByAssignee(string userId, int count)
+        {
+            try
+            {
+                var tickets = _context.Tickets
+                    .Include(t => t.Categoria)
+                    .Include(t => t.NivelUrgencia)
+                    .Include(t => t.NivelImportancia)
+                    .Include(t => t.EstadoTicket)
+                    .Include(t => t.CreadoPor)
+                    .Where(t => t.Asignado_A == userId)
+                    .OrderByDescending(t => t.Fecha_Creacion)
+                    .Take(count)
+                    .ToList();
+
+                return tickets.Select(MapToViewModel).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en GetRecentTicketsByAssignee");
+                return new List<TicketViewModel>();
+            }
+        }
+
+        public async Task<int> GetTicketsCreadosHoyAsync(string userId)
+        {
+            try
+            {
+                return await _context.Tickets
+                    .CountAsync(t => t.Creado_Por == userId && t.Fecha_Creacion.Value.Date == DateTime.Today);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en GetTicketsCreadosHoyAsync");
+                return 0;
+            }
+        }
+
+        public async Task<int> GetTicketsPendientesAsync(string userId)
+        {
+            try
+            {
+                // Obtenemos el ID del estado "Pendiente"
+                var estadoPendienteId = await _context.Estado_Tickets
+                    .Where(e => e.Estado == "Pendiente")
+                    .Select(e => e.ID_EstadoTicket)
+                    .FirstOrDefaultAsync();
+
+                return await _context.Tickets
+                    .CountAsync(t => t.Creado_Por == userId && t.ID_EstadoTicket == estadoPendienteId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en GetTicketsPendientesAsync");
+                return 0;
+            }
+        }
+
+        public async Task<int> GetTotalTicketsCreadosAsync(string userId)
+        {
+            try
+            {
+                return await _context.Tickets
+                    .CountAsync(t => t.Creado_Por == userId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en GetTotalTicketsCreadosAsync");
+                return 0;
+            }
+        }
+
+        public async Task<List<TicketViewModel>> GetTicketsRecientesByCreadoPorAsync(string userId, int count)
+        {
+            try
+            {
+                var tickets = await _context.Tickets
+                    .Include(t => t.Categoria)
+                    .Include(t => t.NivelUrgencia)
+                    .Include(t => t.NivelImportancia)
+                    .Include(t => t.EstadoTicket)
+                    .Include(t => t.AsignadoA)
+                    .Where(t => t.Creado_Por == userId)
+                    .OrderByDescending(t => t.Fecha_Creacion)
+                    .Take(count)
+                    .ToListAsync();
+
+                return tickets.Select(MapToViewModel).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en GetTicketsRecientesByCreadoPorAsync");
+                return new List<TicketViewModel>();
+            }
+        }
+
+        public async Task<int> GetTicketsResueltosHoyAsync(string userId)
+        {
+            try
+            {
+                // Utilizamos el stored procedure
+                var parameters = new List<SqlParameter>
+        {
+            new SqlParameter("@ID_Usuario", userId)
+        };
+
+                var result = await _context.Database
+                    .ExecuteSqlRawAsync("EXEC sp_TicketsResueltosHoy @ID_Usuario", parameters.ToArray());
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en GetTicketsResueltosHoyAsync");
+                return 0;
+            }
+        }
+
+        public List<TicketViewModel> GetRecentTicketsByCreator(string userId, int count)
+        {
+            try
+            {
+                var tickets = _context.Tickets
+                    .Include(t => t.Categoria)
+                    .Include(t => t.NivelUrgencia)
+                    .Include(t => t.NivelImportancia)
+                    .Include(t => t.EstadoTicket)
+                    .Include(t => t.AsignadoA)
+                    .Where(t => t.Creado_Por == userId)
+                    .OrderByDescending(t => t.Fecha_Creacion)
+                    .Take(count)
+                    .ToList();
+
+                return tickets.Select(MapToViewModel).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en GetRecentTicketsByCreator");
+                return new List<TicketViewModel>();
+            }
+        }
+
+        public async Task<int> GetTotalTicketsResueltosAsync(string userId)
+        {
+            try
+            {
+                return await _context.Ticket_Solucionados
+                    .CountAsync(s => s.Resuelto_Por == userId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en GetTotalTicketsResueltosAsync");
+                return 0;
+            }
+        }
+
+        public async Task<List<TicketViewModel>> GetTicketsRecientesByAsignadoAsync(string userId, int count)
+        {
+            try
+            {
+                var tickets = await _context.Tickets
+                    .Include(t => t.Categoria)
+                    .Include(t => t.NivelUrgencia)
+                    .Include(t => t.NivelImportancia)
+                    .Include(t => t.EstadoTicket)
+                    .Include(t => t.CreadoPor)
+                    .Where(t => t.Asignado_A == userId)
+                    .OrderByDescending(t => t.Fecha_Creacion)
+                    .Take(count)
+                    .ToListAsync();
+
+                return tickets.Select(MapToViewModel).ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en GetTicketsRecientesByAsignadoAsync");
+                return new List<TicketViewModel>();
+            }
+        }
+
+        public async Task<int> GetTicketsAsignadosPendientesAsync(string userId)
+        {
+            try
+            {
+                // Obtenemos el ID del estado "Resuelto" para excluirlo
+                var estadoResueltoId = await _context.Estado_Tickets
+                    .Where(e => e.Estado == "Resuelto")
+                    .Select(e => e.ID_EstadoTicket)
+                    .FirstOrDefaultAsync();
+
+                return await _context.Tickets
+                    .CountAsync(t => t.Asignado_A == userId && t.ID_EstadoTicket != estadoResueltoId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error en GetTicketsAsignadosPendientesAsync");
+                return 0;
+            }
         }
     }
 }

@@ -1,19 +1,13 @@
 ﻿@model AplicacionDeTickets.Models.ViewModels.TicketViewModel
 
-@{ViewData
-    ["Title"] ="Editar Ticket";
-
-    
-var rolUsuario =User.Claims.FirstOrDefault(c =>c.Type ==System.Security.Claims.ClaimTypes.Role)?.Value;
+@{
+    ViewData["Title"] = "Editar Ticket";
+    var rolUsuario = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value;
 }
-
-
-
-
 
 <div class="container">
     <h1 class="mb-4">@ViewData["Title"]</h1>
-    
+
     <div class="row">
         <div class="col-md-12">
             <div class="card">
@@ -23,12 +17,11 @@ var rolUsuario =User.Claims.FirstOrDefault(c =>c.Type ==System.Security.Claims.C
                 <div class="card-body">
                     <form asp-action="Edit" method="post">
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-                        
+
                         <input type="hidden" asp-for="ID_Ticket" />
                         <input type="hidden" asp-for="Consecutivo" />
-                        <input type="hidden" asp-for="Creado_Por" />
                         <input type="hidden" asp-for="Fecha_Creacion" />
-                        
+
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
@@ -36,7 +29,7 @@ var rolUsuario =User.Claims.FirstOrDefault(c =>c.Type ==System.Security.Claims.C
                                     <input asp-for="Asunto" class="form-control" />
                                     <span asp-validation-for="Asunto" class="text-danger"></span>
                                 </div>
-                                
+
                                 <div class="form-group mb-3">
                                     <label asp-for="ID_Categoria" class="form-label">Categoría</label>
                                     <select asp-for="ID_Categoria" class="form-select" asp-items="Model.Categorias">
@@ -44,7 +37,7 @@ var rolUsuario =User.Claims.FirstOrDefault(c =>c.Type ==System.Security.Claims.C
                                     </select>
                                     <span asp-validation-for="ID_Categoria" class="text-danger"></span>
                                 </div>
-                                
+
                                 <div class="form-group mb-3">
                                     <label asp-for="ID_NivelUrgencia" class="form-label">Nivel de Urgencia</label>
                                     <select asp-for="ID_NivelUrgencia" class="form-select" asp-items="Model.NivelesUrgencia">
@@ -52,8 +45,14 @@ var rolUsuario =User.Claims.FirstOrDefault(c =>c.Type ==System.Security.Claims.C
                                     </select>
                                     <span asp-validation-for="ID_NivelUrgencia" class="text-danger"></span>
                                 </div>
+
+                                <div class="form-group mb-3">
+                                    <label asp-for="Creado_Por" class="form-label">Creado Por</label>
+                                    <input asp-for="Creado_Por" class="form-control" />
+                                    <span asp-validation-for="Creado_Por" class="text-danger"></span>
+                                </div>
                             </div>
-                            
+
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
                                     <label asp-for="ID_NivelImportancia" class="form-label">Nivel de Importancia</label>
@@ -62,7 +61,7 @@ var rolUsuario =User.Claims.FirstOrDefault(c =>c.Type ==System.Security.Claims.C
                                     </select>
                                     <span asp-validation-for="ID_NivelImportancia" class="text-danger"></span>
                                 </div>
-                                
+
                                 <div class="form-group mb-3">
                                     <label asp-for="ID_EstadoTicket" class="form-label">Estado</label>
                                     <select asp-for="ID_EstadoTicket" class="form-select" asp-items="Model.Estados">
@@ -70,17 +69,9 @@ var rolUsuario =User.Claims.FirstOrDefault(c =>c.Type ==System.Security.Claims.C
                                     </select>
                                     <span asp-validation-for="ID_EstadoTicket" class="text-danger"></span>
                                 </div>
-                                
-                                <div class="form-group mb-3">
-                                    <label asp-for="Asignado_A" class="form-label">Asignar a</label>
-                                    <select asp-for="Asignado_A" class="form-select" asp-items="Model.Analistas">
-                                        <option value="">-- Seleccione un analista --</option>
-                                    </select>
-                                    <span asp-validation-for="Asignado_A" class="text-danger"></span>
-                                </div>
-                            </div>
-                        </div>
-                        
+
+                             
+
                         <div class="form-group mt-3">
                             <button type="submit" class="btn btn-primary">Guardar Cambios</button>
                             <a asp-action="Details" asp-route-id="@Model.ID_Ticket" class="btn btn-secondary">Cancelar</a>
@@ -93,16 +84,7 @@ var rolUsuario =User.Claims.FirstOrDefault(c =>c.Type ==System.Security.Claims.C
 </div>
 
 @section Scripts {
-    
-@{
-await
- Html
-.
-RenderPartialAsync
-(
-"_ValidationScriptsPartial"
-)
-;
-}
-
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

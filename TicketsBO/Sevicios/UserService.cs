@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using AplicacionDeTickets.Models.DbContexts;
 using AplicacionDeTickets.Models.Entities;
 using AplicacionDeTickets.Models.ViewModels;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -92,12 +94,19 @@ namespace AplicacionDeTickets.Services
         {
             try
             {
-                // Usar el sp_TicketsCreadosHoy
-                var result = await _context.Database
-                    .SqlQueryRaw<int>($"EXEC sp_TicketsCreadosHoy @ID_Usuario = {userId}")
-                    .ToListAsync();
+                using (var connection = new SqlConnection(_context.Database.GetConnectionString()))
+                {
+                    await connection.OpenAsync();
 
-                return result.FirstOrDefault();
+                    using (var command = new SqlCommand("sp_TicketsCreadosHoy", connection))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+                        command.Parameters.AddWithValue("@ID_Usuario", userId);
+
+                        var result = Convert.ToInt32(await command.ExecuteScalarAsync());
+                        return result;
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -110,12 +119,19 @@ namespace AplicacionDeTickets.Services
         {
             try
             {
-                // Usar el sp_TicketsResueltosHoy
-                var result = await _context.Database
-                    .SqlQueryRaw<int>($"EXEC sp_TicketsResueltosHoy @ID_Usuario = {userId}")
-                    .ToListAsync();
+                using (var connection = new SqlConnection(_context.Database.GetConnectionString()))
+                {
+                    await connection.OpenAsync();
 
-                return result.FirstOrDefault();
+                    using (var command = new SqlCommand("sp_TicketsResueltosHoy", connection))
+                    {
+                        command.CommandType = CommandType.StoredProcedure;
+                        command.Parameters.AddWithValue("@ID_Usuario", userId);
+
+                        var result = Convert.ToInt32(await command.ExecuteScalarAsync());
+                        return result;
+                    }
+                }
             }
             catch (Exception ex)
             {

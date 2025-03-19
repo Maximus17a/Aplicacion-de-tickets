@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-
 namespace AplicacionDeTickets.Models.Entities
 {
-    public class Tickets
+    public class Ticket
     {
         [Key]
         public int ID_Ticket { get; set; }

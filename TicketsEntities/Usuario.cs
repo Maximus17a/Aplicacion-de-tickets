@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-
 namespace AplicacionDeTickets.Models.Entities
 {
     public class Usuario
@@ -42,8 +41,8 @@ namespace AplicacionDeTickets.Models.Entities
         public DateTime Fecha_Registro { get; set; }
 
         // Navegación
-        public virtual ICollection<Tickets> TicketsCreados { get; set; }
-        public virtual ICollection<Tickets> TicketsAsignados { get; set; }
+        public virtual ICollection<Ticket> TicketsCreados { get; set; }
+        public virtual ICollection<Ticket> TicketsAsignados { get; set; }
         public virtual ICollection<HistorialTicket> HistorialModificaciones { get; set; }
         public virtual ICollection<TicketSolucionado> TicketsSolucionados { get; set; }
     }

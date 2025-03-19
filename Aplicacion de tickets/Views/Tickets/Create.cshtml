@@ -14,7 +14,8 @@
                     <h4>Nuevo Ticket</h4>
                 </div>
                 <div class="card-body">
-                    <form asp-action="Create" method="post">
+                    <form asp-controller="Tickets" asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
                         <div class="row">
@@ -87,7 +88,11 @@
                                     <span asp-validation-for="Asignado_A" class="text-danger"></span>
                                 </div>
 
-                                <input type="hidden" asp-for="Creado_Por" />
+                                <div class="form-group mb-3">
+                                    <label asp-for="Creado_Por" class="form-label">Creado Por</label>
+                                    <input asp-for="Creado_Por" class="form-control" />
+                                    <span asp-validation-for="Creado_Por" class="text-danger"></span>
+                                </div>
                             </div>
                         </div>
 
@@ -106,4 +111,20 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    <script>
+        // Script para depuración
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+
+            form.addEventListener('submit', function(e) {
+                console.log('Formulario enviado');
+            });
+
+            const submitButton = document.querySelector('button[type="submit"]');
+            submitButton.addEventListener('click', function() {
+                console.log('Botón de envío clickeado');
+            });
+        });
+    </script>
 }

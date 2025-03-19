@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
-using System.Net.Sockets;
 
 namespace AplicacionDeTickets.Models.Entities
 {
@@ -21,7 +20,7 @@ namespace AplicacionDeTickets.Models.Entities
         public DateTime? Fecha_Resolucion { get; set; }
 
         // Navegación
-        public virtual Tickets Ticket { get; set; }
+        public virtual Ticket Ticket { get; set; }
         public virtual Usuario ResueltoPor { get; set; }
     }
 }

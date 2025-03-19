@@ -15,6 +15,6 @@ namespace AplicacionDeTickets.Models.ViewModels
         public int TotalTicketsResueltos { get; set; }
 
         // Tickets recientes
-        public List<TicketViewModel> TicketsRecientes { get; set; }
+        public List<TicketViewModel> TicketsRecientes { get; set; } = new List<TicketViewModel>();
     }
 }

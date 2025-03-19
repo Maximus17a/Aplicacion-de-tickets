@@ -30,7 +30,7 @@ namespace AplicacionDeTickets.Models.ViewModels
         public int ID_NivelImportancia { get; set; }
 
         [Display(Name = "Estado")]
-        public int? ID_EstadoTicket { get; set; }
+        public int ID_EstadoTicket { get; set; }
 
         [Display(Name = "Creado Por")]
         public string Creado_Por { get; set; }

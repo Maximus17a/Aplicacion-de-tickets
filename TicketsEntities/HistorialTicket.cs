@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
-using System.Net.Sockets;
 
 namespace AplicacionDeTickets.Models.Entities
 {
@@ -23,7 +22,7 @@ namespace AplicacionDeTickets.Models.Entities
         public string Comentarios { get; set; }
 
         // Navegación
-        public virtual Tickets Ticket { get; set; }
+        public virtual Ticket Ticket { get; set; }
         public virtual Usuario ModificadoPor { get; set; }
         public virtual EstadoTicket EstadoPrevio { get; set; }
         public virtual EstadoTicket NuevoEstado { get; set; }

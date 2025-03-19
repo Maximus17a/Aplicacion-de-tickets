@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Net.Sockets;
 
 namespace AplicacionDeTickets.Models.Entities
 {
@@ -13,6 +12,6 @@ namespace AplicacionDeTickets.Models.Entities
         public string Nivel_Urgencia { get; set; }
 
         // Navegación
-        public virtual ICollection<Tickets> Tickets { get; set; }
+        public virtual ICollection<Ticket> Tickets { get; set; }
     }
 }

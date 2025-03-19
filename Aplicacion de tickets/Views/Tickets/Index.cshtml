@@ -7,7 +7,7 @@
 
 <div class="container">
     <h1 class="mb-4">@ViewData["Title"]</h1>
-    
+
     @if (TempData["SuccessMessage"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -15,7 +15,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
-    
+
     @if (TempData["ErrorMessage"] != null)
     {
         <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -23,7 +23,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
-    
+
     <div class="row mb-3">
         <div class="col">
             @if (rolUsuario == "Soporte")
@@ -34,7 +34,7 @@
             }
         </div>
     </div>
-    
+
     @if (Model != null && Model.Any())
     {
         <div class="card">
@@ -140,4 +140,3 @@
         </div>
     }
 </div>
-

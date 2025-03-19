@@ -13,6 +13,6 @@ namespace AplicacionDeTickets.Models.Entities
         public string Nivel_Importancia { get; set; }
 
         // Navegación
-        public virtual ICollection<Tickets> Tickets { get; set; }
+        public virtual ICollection<Ticket> Tickets { get; set; }
     }
 }

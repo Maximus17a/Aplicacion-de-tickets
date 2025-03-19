@@ -38,7 +38,6 @@
                 </div>
             </div>
         </div>
-
         <div class="card-body">
             <div class="row">
                 <div class="col-md-6">
@@ -70,7 +69,6 @@
                         </dd>
                     </dl>
                 </div>
-
                 <div class="col-md-6">
                     <dl class="row">
                         <dt class="col-sm-4">Urgencia:</dt>
@@ -120,7 +118,6 @@
                 </div>
             </div>
         </div>
-
         <div class="card-footer">
             @if (rolUsuario == "Analista" && Model.Estado != "Resuelto" && Model.Asignado_A == User.Identity.Name)
             {
@@ -128,22 +125,13 @@
                     <div class="col-md-6">
                         <form asp-action="OpenForDocumentation" asp-route-id="@Model.ID_Ticket" method="post">
                             <div class="input-group">
-                                <input type="text"
-                                       name="comentarios"
-                                       class="form-control"
-                                       placeholder="Comentarios (opcional)" />
-                                <button type="submit" class="btn btn-primary">
-                                    Abrir para Documentación
-                                </button>
+                                <input type="text" name="comentarios" class="form-control" placeholder="Comentarios (opcional)" />
+                                <button type="submit" class="btn btn-primary">Abrir para Documentación</button>
                             </div>
                         </form>
                     </div>
-
                     <div class="col-md-6 text-end">
-                        <a asp-controller="Soluciones"
-                           asp-action="Create"
-                           asp-route-id="@Model.ID_Ticket"
-                           class="btn btn-success">
+                        <a asp-controller="Soluciones" asp-action="Create" asp-route-id="@Model.ID_Ticket" class="btn btn-success">
                             <i class="bi bi-check-circle"></i> Documentar Solución
                         </a>
                     </div>

@@ -106,7 +106,7 @@ namespace AplicacionDeTickets.Controllers
             {
                 var ticket = new TicketViewModel
                 {
-                    Creado_Por = User.Identity.Name,
+                    // Se quita la asignación automática: Creado_Por = User.Identity.Name,
                     Fecha_Creacion = DateTime.Now
                 };
 
@@ -134,29 +134,12 @@ namespace AplicacionDeTickets.Controllers
         {
             try
             {
-                // Solo se validan los campos que el usuario debe completar
-                if (!ModelState.IsValid)
-                {
-                    _logger.LogWarning("ModelState inválido al crear ticket");
-                    foreach (var state in ModelState)
-                    {
-                        if (state.Value.Errors.Count > 0)
-                        {
-                            _logger.LogWarning($"Errores en {state.Key}: {string.Join(", ", state.Value.Errors.Select(e => e.ErrorMessage))}");
-                        }
-                    }
+                // Log para depuración
+                _logger.LogInformation("Inicio de Create POST");
 
-                    // Recargar las listas para los dropdowns
-                    ticket.Categorias = await _ticketService.GetCategoriasSelectListAsync();
-                    ticket.NivelesUrgencia = await _ticketService.GetNivelesUrgenciaSelectListAsync();
-                    ticket.NivelesImportancia = await _ticketService.GetNivelesImportanciaSelectListAsync();
-                    ticket.Analistas = await _ticketService.GetAnalistasSelectListAsync();
+                // Se elimina la validación de ModelState
+                // if (!ModelState.IsValid) { ... }
 
-                    return View(ticket);
-                }
-
-                // Asignar el usuario actual como creador
-                ticket.Creado_Por = User.Identity.Name;
                 _logger.LogInformation($"Creando ticket con Asunto: {ticket.Asunto}, Creador: {ticket.Creado_Por}");
 
                 var (success, message, ticketId) = await _ticketService.CreateTicketAsync(ticket);
@@ -185,6 +168,11 @@ namespace AplicacionDeTickets.Controllers
 
             return View(ticket);
         }
+
+            // Se elimina la línea: ticket.Creado_Por = User.Identity.Name;
+            // Ahora usará el valor ingresado en el formulario
+
+            
 
         // GET: /Tickets/Edit/5
         [HttpGet]
@@ -231,7 +219,6 @@ namespace AplicacionDeTickets.Controllers
             }
         }
 
-        // POST: /Tickets/Edit/5
         [HttpPost]
         [ActionName("Edit")]
         [ValidateAntiForgeryToken]
@@ -242,41 +229,41 @@ namespace AplicacionDeTickets.Controllers
                 return NotFound();
             }
 
-            if (ModelState.IsValid)
+            // Se elimina la validación de ModelState
+            // if (ModelState.IsValid) { ... }
+
+            try
             {
-                try
+                // Verificar que el usuario tenga acceso a este ticket
+                var userId = User.Identity.Name;
+                var rolUsuario = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+
+                if (rolUsuario == "Soporte" && ticket.Creado_Por != userId)
                 {
-                    // Verificar que el usuario tenga acceso a este ticket
-                    var userId = User.Identity.Name;
-                    var rolUsuario = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
-
-                    if (rolUsuario == "Soporte" && ticket.Creado_Por != userId)
-                    {
-                        return Forbid();
-                    }
-
-                    if (rolUsuario == "Analista" && ticket.Asignado_A != userId)
-                    {
-                        return Forbid();
-                    }
-
-                    // Actualizar el ticket
-                    var (success, message) = await _ticketService.UpdateTicketAsync(ticket);
-
-                    if (success)
-                    {
-                        TempData["SuccessMessage"] = message;
-                        return RedirectToAction(nameof(Details), new { id = ticket.ID_Ticket });
-                    }
-
-                    ModelState.AddModelError(string.Empty, message);
-                    _logger.LogWarning($"Error al actualizar ticket {id}: {message}");
+                    return Forbid();
                 }
-                catch (Exception ex)
+
+                if (rolUsuario == "Analista" && ticket.Asignado_A != userId)
                 {
-                    _logger.LogError(ex, $"Error al actualizar ticket {id}");
-                    ModelState.AddModelError(string.Empty, "Error al actualizar ticket: " + ex.Message);
+                    return Forbid();
                 }
+
+                // Actualizar el ticket
+                var (success, message) = await _ticketService.UpdateTicketAsync(ticket);
+
+                if (success)
+                {
+                    TempData["SuccessMessage"] = message;
+                    return RedirectToAction(nameof(Details), new { id = ticket.ID_Ticket });
+                }
+
+                ModelState.AddModelError(string.Empty, message);
+                _logger.LogWarning($"Error al actualizar ticket {id}: {message}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error al actualizar ticket {id}");
+                ModelState.AddModelError(string.Empty, "Error al actualizar ticket: " + ex.Message);
             }
 
             // Si llegamos aquí, algo falló; volver a cargar las listas y mostrar el formulario de nuevo
